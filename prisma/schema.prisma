@@ -1,0 +1,69 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  name                String
+  monthlyIncomeTarget Float              @default(70000)
+  riskProfile         String             @default("MODERATE") // CONSERVATIVE, MODERATE, AGGRESSIVE
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  transactions        Transaction[]
+  assetsLiabilities   AssetLiability[]
+  goals               FinancialGoal[]
+  holdings            PortfolioHolding[]
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // INCOME | EXPENSE
+  category    String   // NEEDS | WANTS | SAVINGS | INVESTMENT | SALARY | BONUS
+  amount      Float
+  description String
+  date        DateTime @default(now())
+  isRecurring Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AssetLiability {
+  id           String   @id @default(uuid())
+  userId       String
+  type         String   // ASSET | LIABILITY
+  subCategory  String   // CASH | STOCK | REAL_ESTATE | CRYPTO | CREDIT_CARD | MORTGAGE | PERSONAL_LOAN
+  name         String
+  value        Float
+  interestRate Float?   // For loans or high-yield savings
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FinancialGoal {
+  id            String   @id @default(uuid())
+  userId        String
+  name          String
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  targetDate    DateTime
+  category      String   // EMERGENCY_FUND | HOUSE_DOWNPAYMENT | RETIREMENT_FIRE | TRAVEL | EDUCATION
+  priority      String   @default("MEDIUM") // HIGH, MEDIUM, LOW
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PortfolioHolding {
+  id               String   @id @default(uuid())
+  userId           String
+  name             String
+  ticker           String
+  assetClass       String   // US_EQUITY | GLOBAL_EQUITY | BOND | CASH | COMMODITY
+  currentAmount    Float
+  targetPercentage Float
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
